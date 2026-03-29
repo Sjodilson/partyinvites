@@ -9,10 +9,20 @@ const PartyExport = (() => {
     const card = PartyEditor.getCardElement();
     if (!card) throw new Error('No card element found');
 
-    // Temporarily remove hover/focus styles for clean capture
+    // Prepare card for clean capture
     card.querySelectorAll('.card-field').forEach(el => {
       el.removeAttribute('contenteditable');
       el.style.boxShadow = 'none';
+    });
+
+    // Hide sticker controls (delete, resize, rotate handles)
+    card.querySelectorAll('.sticker-delete, .sticker-resize, .sticker-rotate').forEach(el => {
+      el.style.display = 'none';
+    });
+
+    // Deselect stickers
+    card.querySelectorAll('.card-sticker').forEach(el => {
+      el.classList.remove('selected');
     });
 
     const canvas = await html2canvas(card, {
@@ -24,10 +34,13 @@ const PartyExport = (() => {
       height: card.offsetHeight,
     });
 
-    // Restore contenteditable
+    // Restore contenteditable and sticker controls
     card.querySelectorAll('.card-field').forEach(el => {
       el.setAttribute('contenteditable', 'true');
       el.style.boxShadow = '';
+    });
+    card.querySelectorAll('.sticker-delete, .sticker-resize, .sticker-rotate').forEach(el => {
+      el.style.display = '';
     });
 
     return canvas;

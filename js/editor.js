@@ -64,6 +64,77 @@ const PartyEditor = (() => {
   }
 
   /* ---------- Render Card ---------- */
+
+  // Decoration definitions: real DOM elements instead of CSS pseudo-elements
+  const decorationDefs = {
+    confetti: [
+      { text: '🎈', style: 'position:absolute;font-size:2rem;opacity:0.2;top:12px;left:12px;transform:rotate(-15deg)' },
+      { text: '🎉', style: 'position:absolute;font-size:2rem;opacity:0.2;bottom:12px;right:12px;transform:rotate(15deg)' },
+    ],
+    elegant: [
+      { text: '✦', style: 'position:absolute;font-size:1.2rem;opacity:0.25;top:16px;left:50%;transform:translateX(-50%)' },
+      { text: '✦', style: 'position:absolute;font-size:1.2rem;opacity:0.25;bottom:16px;left:50%;transform:translateX(-50%)' },
+    ],
+    botanical: [
+      { text: '🌿', style: 'position:absolute;font-size:2rem;opacity:0.15;top:8px;right:8px;transform:rotate(45deg)' },
+      { text: '🌸', style: 'position:absolute;font-size:2rem;opacity:0.15;bottom:8px;left:8px;transform:rotate(-20deg)' },
+    ],
+    'minimal-dark': [
+      { text: '', style: 'position:absolute;top:20px;left:20px;right:20px;bottom:20px;border:1px solid rgba(201,168,76,0.2);border-radius:4px' },
+    ],
+    clean: [
+      { text: '', style: 'position:absolute;left:25%;right:25%;height:2px;background:#6C5CE7;opacity:0.15;top:28px' },
+      { text: '', style: 'position:absolute;left:25%;right:25%;height:2px;background:#6C5CE7;opacity:0.15;bottom:28px' },
+    ],
+    sparkle: [
+      { text: '✨', style: 'position:absolute;font-size:1.4rem;opacity:0.3;top:10px;left:10px' },
+      { text: '✨', style: 'position:absolute;font-size:1.4rem;opacity:0.3;bottom:10px;right:10px' },
+    ],
+    comic: [
+      { text: '💥', style: 'position:absolute;font-size:2rem;opacity:0.12;top:8px;right:8px;transform:rotate(15deg)' },
+      { text: '⚡', style: 'position:absolute;font-size:1.5rem;opacity:0.12;bottom:8px;left:12px' },
+    ],
+    treasure: [
+      { text: '💎', style: 'position:absolute;font-size:1.5rem;opacity:0.15;top:12px;right:12px' },
+      { text: '⚓', style: 'position:absolute;font-size:1.5rem;opacity:0.15;bottom:12px;left:12px' },
+    ],
+    rainbow: [
+      { text: '', style: 'position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#FF6F00,#FDD835,#66BB6A,#42A5F5,#AB47BC);opacity:0.6' },
+      { text: '', style: 'position:absolute;bottom:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#AB47BC,#42A5F5,#66BB6A,#FDD835,#FF6F00);opacity:0.6' },
+    ],
+    neon: [
+      { text: '', style: 'position:absolute;top:10px;left:10px;right:10px;bottom:10px;border:1px solid rgba(224,64,251,0.25);border-radius:8px' },
+      { text: '🪩', style: 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;opacity:0.06' },
+    ],
+    floral: [
+      { text: '🌹', style: 'position:absolute;font-size:1.5rem;opacity:0.15;top:10px;right:10px;transform:rotate(15deg)' },
+      { text: '🌸', style: 'position:absolute;font-size:1.5rem;opacity:0.15;bottom:10px;left:10px;transform:rotate(-10deg)' },
+    ],
+    sunny: [
+      { text: '🌻', style: 'position:absolute;font-size:2rem;opacity:0.15;top:8px;right:8px' },
+      { text: '🌞', style: 'position:absolute;font-size:1.5rem;opacity:0.12;bottom:10px;left:10px' },
+    ],
+    autumn: [
+      { text: '🍂', style: 'position:absolute;font-size:1.5rem;opacity:0.18;top:10px;left:10px;transform:rotate(-25deg)' },
+      { text: '🍁', style: 'position:absolute;font-size:1.5rem;opacity:0.18;bottom:10px;right:10px;transform:rotate(20deg)' },
+    ],
+    luxe: [
+      { text: '', style: 'position:absolute;top:16px;left:16px;right:16px;bottom:16px;border:1px solid rgba(255,215,0,0.25);border-radius:4px' },
+      { text: '✨', style: 'position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:1rem;opacity:0.3' },
+    ],
+    relaxed: [
+      { text: '🎵', style: 'position:absolute;font-size:1.3rem;opacity:0.12;top:10px;right:12px' },
+    ],
+    mono: [
+      { text: '', style: 'position:absolute;left:20%;right:20%;height:1px;background:#1A1A1A;opacity:0.2;top:24px' },
+      { text: '', style: 'position:absolute;left:20%;right:20%;height:1px;background:#1A1A1A;opacity:0.2;bottom:24px' },
+    ],
+    soft: [
+      { text: '✨', style: 'position:absolute;font-size:1rem;opacity:0.2;top:12px;left:12px' },
+      { text: '🌸', style: 'position:absolute;font-size:1rem;opacity:0.2;bottom:12px;right:12px' },
+    ],
+  };
+
   function renderCard() {
     const card = cardEl();
     if (!card) return;
@@ -77,9 +148,18 @@ const PartyEditor = (() => {
 
     card.innerHTML = '';
 
-    // Decorations layer
+    // Decorations layer — real DOM elements for export fidelity
     const decoEl = document.createElement('div');
-    decoEl.className = `card-decorations ${currentTemplate.decorations.type}`;
+    decoEl.className = 'card-decorations';
+    const decoType = currentTemplate.decorations.type;
+    const defs = decorationDefs[decoType] || [];
+    defs.forEach(d => {
+      const span = document.createElement('span');
+      span.setAttribute('style', d.style);
+      span.style.pointerEvents = 'none';
+      if (d.text) span.textContent = d.text;
+      decoEl.appendChild(span);
+    });
     card.appendChild(decoEl);
 
     // Inner content
@@ -100,6 +180,7 @@ const PartyEditor = (() => {
 
     // Text fields
     const fields = ['subtitle', 'title', 'date', 'location', 'message', 'sender'];
+    const fieldIcons = { date: '📅 ', location: '📍 ' };
     fields.forEach(field => {
       const el = document.createElement('div');
       el.className = 'card-field';
@@ -107,12 +188,20 @@ const PartyEditor = (() => {
       el.setAttribute('contenteditable', 'true');
       el.setAttribute('spellcheck', 'false');
 
+      // Add icon prefix for date/location as real DOM
+      if (fieldIcons[field]) {
+        const icon = document.createElement('span');
+        icon.className = 'card-field-icon';
+        icon.textContent = fieldIcons[field];
+        el.appendChild(icon);
+      }
+
       // Handle newlines in message field
       const text = s.texts[field] || '';
       if (field === 'message' && text.includes('\n')) {
-        el.innerHTML = text.split('\n').map(line => escapeHtml(line)).join('<br>');
+        el.insertAdjacentHTML('beforeend', text.split('\n').map(line => escapeHtml(line)).join('<br>'));
       } else {
-        el.textContent = text;
+        el.appendChild(document.createTextNode(text));
       }
 
       // Apply fonts
@@ -128,8 +217,14 @@ const PartyEditor = (() => {
       }
 
       el.addEventListener('input', () => {
-        s.texts[field] = el.textContent;
-        syncPanelField(field, el.textContent);
+        // Get text content excluding the icon prefix
+        let val = el.textContent;
+        if (fieldIcons[field]) {
+          const iconText = fieldIcons[field];
+          if (val.startsWith(iconText)) val = val.slice(iconText.length);
+        }
+        s.texts[field] = val;
+        syncPanelField(field, val);
         saveState();
       });
 
@@ -917,8 +1012,18 @@ const PartyEditor = (() => {
     targetEl.style.textAlign = state.textAlign;
     targetEl.innerHTML = '';
 
+    // Real DOM decorations
     const decoEl = document.createElement('div');
-    decoEl.className = `card-decorations ${template.decorations.type}`;
+    decoEl.className = 'card-decorations';
+    const decoType = template.decorations.type;
+    const defs = decorationDefs[decoType] || [];
+    defs.forEach(d => {
+      const span = document.createElement('span');
+      span.setAttribute('style', d.style);
+      span.style.pointerEvents = 'none';
+      if (d.text) span.textContent = d.text;
+      decoEl.appendChild(span);
+    });
     targetEl.appendChild(decoEl);
 
     const inner = document.createElement('div');
@@ -936,16 +1041,24 @@ const PartyEditor = (() => {
     }
 
     const fields = ['subtitle', 'title', 'date', 'location', 'message', 'sender'];
+    const fieldIcons = { date: '📅 ', location: '📍 ' };
     fields.forEach(field => {
       const el = document.createElement('div');
       el.className = 'card-field';
       el.setAttribute('data-field', field);
 
+      if (fieldIcons[field]) {
+        const icon = document.createElement('span');
+        icon.className = 'card-field-icon';
+        icon.textContent = fieldIcons[field];
+        el.appendChild(icon);
+      }
+
       const text = state.texts[field] || '';
       if (field === 'message' && text.includes('\n')) {
-        el.innerHTML = text.split('\n').map(line => escapeHtml(line)).join('<br>');
+        el.insertAdjacentHTML('beforeend', text.split('\n').map(line => escapeHtml(line)).join('<br>'));
       } else {
-        el.textContent = text;
+        el.appendChild(document.createTextNode(text));
       }
 
       if (field === 'title' || field === 'subtitle') {
