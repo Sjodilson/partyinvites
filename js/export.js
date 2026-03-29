@@ -99,10 +99,44 @@ const PartyExport = (() => {
         width: w,
         height: h,
       });
-      return canvas;
+
+      // 7. Clip rounded corners at the pixel level (html2canvas doesn't reliably clip border-radius)
+      const radius = parseInt(br) || 16;
+      return clipRoundedCorners(canvas, radius * SCALE);
     } finally {
       document.body.removeChild(offscreen);
     }
+  }
+
+  /**
+   * Draw the source canvas onto a new canvas with rounded-corner clipping.
+   * This ensures corners are transparent regardless of html2canvas quirks.
+   */
+  function clipRoundedCorners(source, radius) {
+    const w = source.width;
+    const h = source.height;
+    const out = document.createElement('canvas');
+    out.width = w;
+    out.height = h;
+    const ctx = out.getContext('2d');
+
+    // Draw rounded rect clip path
+    ctx.beginPath();
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(w - radius, 0);
+    ctx.quadraticCurveTo(w, 0, w, radius);
+    ctx.lineTo(w, h - radius);
+    ctx.quadraticCurveTo(w, h, w - radius, h);
+    ctx.lineTo(radius, h);
+    ctx.quadraticCurveTo(0, h, 0, h - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
+    ctx.clip();
+
+    // Draw the html2canvas result into the clipped area
+    ctx.drawImage(source, 0, 0);
+    return out;
   }
 
   async function exportPNG() {
