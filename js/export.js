@@ -1,84 +1,102 @@
 /* ============================================
    PartyInvites – Export Module (PNG / PDF)
+   ============================================
+   Strategy: clone the card with ALL computed styles inlined,
+   place it in an isolated offscreen container (no parent filters,
+   transforms, or complex CSS ancestors), then let html2canvas
+   render from pure inline styles — zero CSS parsing ambiguity.
    ============================================ */
 
 const PartyExport = (() => {
-  const SCALE = 2; // 2x resolution for sharp output
+  const SCALE = 2;
+
+  /**
+   * Walk two parallel DOM trees (original + clone) and copy every
+   * computed style from the original onto the clone as inline CSS.
+   * After this, the clone is fully self-contained — html2canvas
+   * only reads inline styles, eliminating all CSS resolution issues.
+   */
+  function inlineAllStyles(original, clone) {
+    if (original.nodeType !== Node.ELEMENT_NODE) return;
+    const computed = window.getComputedStyle(original);
+    let css = '';
+    for (let i = 0; i < computed.length; i++) {
+      const p = computed[i];
+      css += p + ':' + computed.getPropertyValue(p) + ';';
+    }
+    clone.style.cssText = css;
+
+    const origKids = original.children;
+    const cloneKids = clone.children;
+    for (let i = 0; i < origKids.length; i++) {
+      if (cloneKids[i]) {
+        inlineAllStyles(origKids[i], cloneKids[i]);
+      }
+    }
+  }
 
   async function captureCard() {
     const card = PartyEditor.getCardElement();
     if (!card) throw new Error('No card element found');
 
-    const canvas = await html2canvas(card, {
-      scale: SCALE,
-      useCORS: true,
-      backgroundColor: null,
-      logging: false,
-      width: card.offsetWidth,
-      height: card.offsetHeight,
-      onclone: (clonedDoc) => {
-        const clonedCard = clonedDoc.getElementById('invitation-card');
-        if (!clonedCard) return;
+    const w = card.offsetWidth;
+    const h = card.offsetHeight;
 
-        // Force all inline colors/backgrounds explicitly on the clone
-        // to ensure they override any CSS specificity issues
-        const state = PartyEditor.getCardState();
-        if (state) {
-          clonedCard.style.setProperty('background', state.colors.background, 'important');
-          clonedCard.style.setProperty('color', state.colors.text, 'important');
+    // 1. Deep-clone (preserves structure, text, attributes)
+    const clone = card.cloneNode(true);
+    clone.removeAttribute('id');
 
-          // Re-apply field-level colors and fonts explicitly
-          clonedCard.querySelectorAll('.card-field').forEach(el => {
-            const field = el.getAttribute('data-field');
-            if (field === 'title' || field === 'subtitle') {
-              el.style.setProperty('color', state.colors.heading, 'important');
-              el.style.setProperty('font-family', state.fonts.heading, 'important');
-            } else {
-              el.style.setProperty('color', state.colors.text, 'important');
-              el.style.setProperty('font-family', state.fonts.body, 'important');
-            }
-            if (field === 'title') {
-              el.style.setProperty('font-size', state.headingSize, 'important');
-            }
-          });
-        }
+    // 2. Inline every computed style from the live card
+    inlineAllStyles(card, clone);
 
-        // html2canvas may not support aspect-ratio: set explicit dimensions
-        const origRect = card.getBoundingClientRect();
-        clonedCard.style.setProperty('width', origRect.width + 'px', 'important');
-        clonedCard.style.setProperty('height', origRect.height + 'px', 'important');
-        clonedCard.style.setProperty('aspect-ratio', 'auto', 'important');
+    // 3. Force explicit pixel dimensions (bypass aspect-ratio)
+    clone.style.width = w + 'px';
+    clone.style.height = h + 'px';
+    clone.style.aspectRatio = 'auto';
+    clone.style.position = 'relative';
+    clone.style.margin = '0';
+    clone.style.filter = 'none';
+    clone.style.animation = 'none';
 
-        // Remove the parent wrapper's filter that can affect color rendering
-        const wrapper = clonedCard.closest('.card-wrapper');
-        if (wrapper) wrapper.style.filter = 'none';
-
-        // Remove editor-specific interactive styles
-        clonedCard.querySelectorAll('.card-field').forEach(el => {
-          el.removeAttribute('contenteditable');
-          el.style.boxShadow = 'none';
-          el.style.outline = 'none';
-        });
-
-        // Remove hover/selection highlights
-        clonedCard.querySelectorAll('.card-field:hover').forEach(el => {
-          el.style.boxShadow = 'none';
-        });
-
-        // Hide sticker controls
-        clonedCard.querySelectorAll('.sticker-delete, .sticker-resize, .sticker-rotate').forEach(el => {
-          el.style.display = 'none';
-        });
-
-        // Deselect stickers
-        clonedCard.querySelectorAll('.card-sticker').forEach(el => {
-          el.classList.remove('selected');
-          el.style.outline = 'none';
-        });
-      },
+    // 4. Remove editor-only interactive elements & states
+    clone.querySelectorAll('.sticker-delete, .sticker-resize, .sticker-rotate')
+      .forEach(el => el.remove());
+    clone.querySelectorAll('.card-sticker').forEach(el => {
+      el.classList.remove('selected');
+      el.style.outline = 'none';
+      el.style.filter = 'none';
+    });
+    clone.querySelectorAll('.card-field').forEach(el => {
+      el.removeAttribute('contenteditable');
+      el.style.cursor = 'default';
+      el.style.boxShadow = 'none';
+      el.style.outline = 'none';
     });
 
-    return canvas;
+    // 5. Place in isolated offscreen container (direct child of body)
+    const offscreen = document.createElement('div');
+    offscreen.style.cssText =
+      'position:fixed;left:-9999px;top:0;' +
+      'width:' + w + 'px;height:' + h + 'px;' +
+      'overflow:hidden;z-index:-1;pointer-events:none;' +
+      'background:transparent;filter:none;';
+    offscreen.appendChild(clone);
+    document.body.appendChild(offscreen);
+
+    try {
+      // 6. Capture — styles are all inline so html2canvas just reads them
+      const canvas = await html2canvas(clone, {
+        scale: SCALE,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+        width: w,
+        height: h,
+      });
+      return canvas;
+    } finally {
+      document.body.removeChild(offscreen);
+    }
   }
 
   async function exportPNG() {
