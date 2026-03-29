@@ -79,43 +79,67 @@ const PartyApp = (() => {
       card.style.animationDelay = `${idx * 0.06}s`;
       card.style.animation = 'slideUp 0.4s ease both';
 
+      // Build a faithful mini-card matching the editor
       const preview = document.createElement('div');
       preview.className = 'template-card-preview';
-      preview.style.background = tpl.thumbnailGradient;
+      preview.style.background = tpl.colors.background;
       preview.style.color = tpl.colors.text;
+      preview.style.border = tpl.decorations.borderStyle;
+      preview.style.borderRadius = tpl.decorations.borderRadius;
+      preview.style.textAlign = tpl.textAlign || 'center';
 
-      // Decoration elements
-      if (tpl.decorations.emoji) {
-        const segmenter = new Intl.Segmenter('sv', { granularity: 'grapheme' });
-        const emojis = [...segmenter.segment(tpl.decorations.emoji)].map(s => s.segment).filter(s => /\p{Emoji}/u.test(s));
-        emojis.forEach((emoji, i) => {
-          const span = document.createElement('span');
-          span.className = 'preview-decoration';
-          span.textContent = emoji;
-          const positions = [
-            { top: '10%', left: '8%', transform: 'rotate(-20deg)' },
-            { top: '15%', right: '8%', transform: 'rotate(15deg)' },
-            { bottom: '12%', left: '12%', transform: 'rotate(10deg)' },
-            { bottom: '8%', right: '10%', transform: 'rotate(-10deg)' },
-          ];
-          if (positions[i]) Object.assign(span.style, positions[i]);
-          preview.appendChild(span);
-        });
-      }
+      // Decoration layer (same CSS classes as the editor card)
+      const decoEl = document.createElement('div');
+      decoEl.className = `card-decorations ${tpl.decorations.type}`;
+      preview.appendChild(decoEl);
 
-      const previewTitle = document.createElement('div');
-      previewTitle.className = 'preview-title';
-      previewTitle.style.fontFamily = tpl.fonts.heading;
-      previewTitle.style.color = tpl.colors.heading;
-      previewTitle.textContent = t(`${tpl.i18nPrefix}.title`);
+      // Content wrapper
+      const inner = document.createElement('div');
+      inner.className = 'preview-inner';
 
-      const previewSubtitle = document.createElement('div');
-      previewSubtitle.className = 'preview-subtitle';
-      previewSubtitle.style.fontFamily = tpl.fonts.body;
-      previewSubtitle.textContent = t(`${tpl.i18nPrefix}.subtitle`);
+      const defaults = PartyTemplates.getDefaultTexts(tpl);
 
-      preview.appendChild(previewTitle);
-      preview.appendChild(previewSubtitle);
+      const subtitle = document.createElement('div');
+      subtitle.className = 'preview-field preview-subtitle';
+      subtitle.style.fontFamily = tpl.fonts.heading;
+      subtitle.style.color = tpl.colors.heading;
+      subtitle.textContent = defaults.subtitle;
+
+      const title = document.createElement('div');
+      title.className = 'preview-field preview-title';
+      title.style.fontFamily = tpl.fonts.heading;
+      title.style.color = tpl.colors.heading;
+      title.textContent = defaults.title;
+
+      const date = document.createElement('div');
+      date.className = 'preview-field preview-detail';
+      date.style.fontFamily = tpl.fonts.body;
+      date.textContent = '📅 ' + defaults.date;
+
+      const location = document.createElement('div');
+      location.className = 'preview-field preview-detail';
+      location.style.fontFamily = tpl.fonts.body;
+      location.textContent = '📍 ' + defaults.location;
+
+      const message = document.createElement('div');
+      message.className = 'preview-field preview-message';
+      message.style.fontFamily = tpl.fonts.body;
+      // Truncate long messages for preview
+      const msgText = defaults.message || '';
+      message.textContent = msgText.length > 60 ? msgText.slice(0, 57) + '...' : msgText;
+
+      const sender = document.createElement('div');
+      sender.className = 'preview-field preview-sender';
+      sender.style.fontFamily = tpl.fonts.body;
+      sender.textContent = defaults.sender;
+
+      inner.appendChild(subtitle);
+      inner.appendChild(title);
+      inner.appendChild(date);
+      inner.appendChild(location);
+      inner.appendChild(message);
+      inner.appendChild(sender);
+      preview.appendChild(inner);
 
       const nameEl = document.createElement('div');
       nameEl.className = 'template-card-name';
