@@ -9,22 +9,6 @@ const PartyExport = (() => {
     const card = PartyEditor.getCardElement();
     if (!card) throw new Error('No card element found');
 
-    // Prepare card for clean capture
-    card.querySelectorAll('.card-field').forEach(el => {
-      el.removeAttribute('contenteditable');
-      el.style.boxShadow = 'none';
-    });
-
-    // Hide sticker controls (delete, resize, rotate handles)
-    card.querySelectorAll('.sticker-delete, .sticker-resize, .sticker-rotate').forEach(el => {
-      el.style.display = 'none';
-    });
-
-    // Deselect stickers
-    card.querySelectorAll('.card-sticker').forEach(el => {
-      el.classList.remove('selected');
-    });
-
     const canvas = await html2canvas(card, {
       scale: SCALE,
       useCORS: true,
@@ -32,15 +16,60 @@ const PartyExport = (() => {
       logging: false,
       width: card.offsetWidth,
       height: card.offsetHeight,
-    });
+      onclone: (clonedDoc) => {
+        const clonedCard = clonedDoc.getElementById('invitation-card');
+        if (!clonedCard) return;
 
-    // Restore contenteditable and sticker controls
-    card.querySelectorAll('.card-field').forEach(el => {
-      el.setAttribute('contenteditable', 'true');
-      el.style.boxShadow = '';
-    });
-    card.querySelectorAll('.sticker-delete, .sticker-resize, .sticker-rotate').forEach(el => {
-      el.style.display = '';
+        // Force all inline colors/backgrounds explicitly on the clone
+        // to ensure they override any CSS specificity issues
+        const state = PartyEditor.getCardState();
+        if (state) {
+          clonedCard.style.setProperty('background', state.colors.background, 'important');
+          clonedCard.style.setProperty('color', state.colors.text, 'important');
+
+          // Re-apply field-level colors and fonts explicitly
+          clonedCard.querySelectorAll('.card-field').forEach(el => {
+            const field = el.getAttribute('data-field');
+            if (field === 'title' || field === 'subtitle') {
+              el.style.setProperty('color', state.colors.heading, 'important');
+              el.style.setProperty('font-family', state.fonts.heading, 'important');
+            } else {
+              el.style.setProperty('color', state.colors.text, 'important');
+              el.style.setProperty('font-family', state.fonts.body, 'important');
+            }
+            if (field === 'title') {
+              el.style.setProperty('font-size', state.headingSize, 'important');
+            }
+          });
+        }
+
+        // Remove the parent wrapper's filter that can affect color rendering
+        const wrapper = clonedCard.closest('.card-wrapper');
+        if (wrapper) wrapper.style.filter = 'none';
+
+        // Remove editor-specific interactive styles
+        clonedCard.querySelectorAll('.card-field').forEach(el => {
+          el.removeAttribute('contenteditable');
+          el.style.boxShadow = 'none';
+          el.style.outline = 'none';
+        });
+
+        // Remove hover/selection highlights
+        clonedCard.querySelectorAll('.card-field:hover').forEach(el => {
+          el.style.boxShadow = 'none';
+        });
+
+        // Hide sticker controls
+        clonedCard.querySelectorAll('.sticker-delete, .sticker-resize, .sticker-rotate').forEach(el => {
+          el.style.display = 'none';
+        });
+
+        // Deselect stickers
+        clonedCard.querySelectorAll('.card-sticker').forEach(el => {
+          el.classList.remove('selected');
+          el.style.outline = 'none';
+        });
+      },
     });
 
     return canvas;
