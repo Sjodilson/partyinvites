@@ -1000,97 +1000,6 @@ const PartyEditor = (() => {
     return currentTemplate;
   }
 
-  /* ---------- Render Shared Card (read-only) ---------- */
-  function renderSharedCard(state, targetEl) {
-    const template = PartyTemplates.getById(state.templateId);
-    if (!template || !targetEl) return;
-
-    targetEl.style.background = state.colors.background;
-    targetEl.style.border = template.decorations.borderStyle;
-    targetEl.style.borderRadius = template.decorations.borderRadius;
-    targetEl.style.color = state.colors.text;
-    targetEl.style.textAlign = state.textAlign;
-    targetEl.innerHTML = '';
-
-    // Real DOM decorations
-    const decoEl = document.createElement('div');
-    decoEl.className = 'card-decorations';
-    const decoType = template.decorations.type;
-    const defs = decorationDefs[decoType] || [];
-    defs.forEach(d => {
-      const span = document.createElement('span');
-      span.setAttribute('style', d.style);
-      span.style.pointerEvents = 'none';
-      if (d.text) span.textContent = d.text;
-      decoEl.appendChild(span);
-    });
-    targetEl.appendChild(decoEl);
-
-    const inner = document.createElement('div');
-    inner.className = 'card-inner';
-    targetEl.appendChild(inner);
-
-    if (state.image) {
-      const imgContainer = document.createElement('div');
-      imgContainer.className = 'card-image-container';
-      const img = document.createElement('img');
-      img.src = state.image;
-      img.alt = '';
-      imgContainer.appendChild(img);
-      inner.appendChild(imgContainer);
-    }
-
-    const fields = ['subtitle', 'title', 'date', 'location', 'message', 'sender'];
-    const fieldIcons = { date: '📅 ', location: '📍 ' };
-    fields.forEach(field => {
-      const el = document.createElement('div');
-      el.className = 'card-field';
-      el.setAttribute('data-field', field);
-
-      if (fieldIcons[field]) {
-        const icon = document.createElement('span');
-        icon.className = 'card-field-icon';
-        icon.textContent = fieldIcons[field];
-        el.appendChild(icon);
-      }
-
-      const text = state.texts[field] || '';
-      if (field === 'message' && text.includes('\n')) {
-        el.insertAdjacentHTML('beforeend', text.split('\n').map(line => escapeHtml(line)).join('<br>'));
-      } else {
-        el.appendChild(document.createTextNode(text));
-      }
-
-      if (field === 'title' || field === 'subtitle') {
-        el.style.fontFamily = state.fonts.heading;
-        el.style.color = state.colors.heading;
-      } else {
-        el.style.fontFamily = state.fonts.body;
-      }
-
-      if (field === 'title') {
-        el.style.fontSize = state.headingSize;
-      }
-
-      inner.appendChild(el);
-    });
-
-    // Render stickers (read-only, no drag)
-    if (state.stickers && state.stickers.length) {
-      state.stickers.forEach(s => {
-        const sEl = document.createElement('span');
-        sEl.className = 'card-sticker';
-        sEl.style.left = s.x + '%';
-        sEl.style.top = s.y + '%';
-        sEl.style.fontSize = s.size + 'px';
-        sEl.style.cursor = 'default';
-        if (s.rotation) sEl.style.transform = `rotate(${s.rotation}deg)`;
-        sEl.textContent = s.emoji;
-        targetEl.appendChild(sEl);
-      });
-    }
-  }
-
   /* ---------- Helpers ---------- */
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -1105,7 +1014,6 @@ const PartyEditor = (() => {
     getCardState,
     getCardElement,
     getCurrentTemplate,
-    renderSharedCard,
     renderCard,
     buildPanels,
   };

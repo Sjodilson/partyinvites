@@ -43,6 +43,12 @@ const PartyExport = (() => {
           });
         }
 
+        // html2canvas may not support aspect-ratio: set explicit dimensions
+        const origRect = card.getBoundingClientRect();
+        clonedCard.style.setProperty('width', origRect.width + 'px', 'important');
+        clonedCard.style.setProperty('height', origRect.height + 'px', 'important');
+        clonedCard.style.setProperty('aspect-ratio', 'auto', 'important');
+
         // Remove the parent wrapper's filter that can affect color rendering
         const wrapper = clonedCard.closest('.card-wrapper');
         if (wrapper) wrapper.style.filter = 'none';

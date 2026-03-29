@@ -10,13 +10,6 @@ const PartyApp = (() => {
   function init() {
     PartyI18n.init();
 
-    // Check if this is a shared card view
-    const sharedState = PartyShare.checkForSharedCard();
-    if (sharedState) {
-      showSharedView(sharedState);
-      return;
-    }
-
     renderGallery();
     bindGlobalEvents();
     bindThemeGenerator();
@@ -29,12 +22,6 @@ const PartyApp = (() => {
     const view = document.getElementById(viewId + '-view');
     if (view) view.classList.add('active');
     currentView = viewId;
-
-    // Show/hide header based on view
-    const header = document.querySelector('.app-header');
-    if (header) {
-      header.style.display = viewId === 'share' ? 'none' : '';
-    }
   }
 
   /* ---------- Gallery ---------- */
@@ -164,15 +151,6 @@ const PartyApp = (() => {
     renderGallery();
   }
 
-  /* ---------- Shared Card View ---------- */
-  function showSharedView(state) {
-    showView('share');
-    const sharedCard = document.getElementById('shared-card');
-    if (sharedCard) {
-      PartyEditor.renderSharedCard(state, sharedCard);
-    }
-  }
-
   /* ---------- Theme Generator ---------- */
   function bindThemeGenerator() {
     const input = document.getElementById('theme-input');
@@ -239,14 +217,10 @@ const PartyApp = (() => {
     const modal = document.getElementById(id);
     if (modal) {
       modal.classList.remove('hidden');
-      // Reset status
       const status = modal.querySelector('.modal-status');
       const body = modal.querySelector('.modal-body');
       if (status) status.classList.add('hidden');
       if (body) body.classList.remove('hidden');
-      // Reset feedback
-      const feedback = modal.querySelector('.share-feedback');
-      if (feedback) feedback.classList.add('hidden');
     }
   }
 
@@ -293,7 +267,6 @@ const PartyApp = (() => {
       // Escape closes modals
       if (e.key === 'Escape') {
         closeModal('export-modal');
-        closeModal('share-modal');
       }
     });
 
@@ -309,19 +282,6 @@ const PartyApp = (() => {
 
     const exportPdf = document.getElementById('export-pdf');
     if (exportPdf) exportPdf.addEventListener('click', () => PartyExport.exportPDF());
-
-    // Share button + modal
-    const btnShare = document.getElementById('btn-share');
-    if (btnShare) btnShare.addEventListener('click', () => openModal('share-modal'));
-
-    const shareClose = document.getElementById('share-modal-close');
-    if (shareClose) shareClose.addEventListener('click', () => closeModal('share-modal'));
-
-    const shareCopy = document.getElementById('share-copy');
-    if (shareCopy) shareCopy.addEventListener('click', () => PartyShare.copyShareLink());
-
-    const shareEmail = document.getElementById('share-email');
-    if (shareEmail) shareEmail.addEventListener('click', () => PartyShare.sendEmail());
 
     // Close modals on overlay click
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
