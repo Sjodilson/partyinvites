@@ -1,4 +1,8 @@
-/* ============================================
+#!/usr/bin/env python3
+# Helper script to write templates.js
+import os
+
+content = r"""/* ============================================
    PartyInvites – Template Definitions
    ============================================ */
 
@@ -842,3 +846,9 @@ const PartyTemplates = (() => {
 
   return { getAll, getById, getByCategory, getCategories, getDefaultTexts, getName, search };
 })();
+"""
+
+target = r'C:\Users\Admin\partyinvites\js\templates.js'
+with open(target, 'w', encoding='utf-8') as f:
+    f.write(content)
+print('Done')
