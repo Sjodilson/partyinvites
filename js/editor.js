@@ -560,8 +560,9 @@ const PartyEditor = (() => {
     el.setAttribute('data-image-id', imgData.id);
     el.style.left = imgData.x + '%';
     el.style.top = imgData.y + '%';
+    const aspect = imgData.aspect || 1;
     el.style.width = imgData.size + 'px';
-    el.style.height = imgData.size + 'px';
+    el.style.height = Math.round(imgData.size / aspect) + 'px';
     if (imgData.rotation) {
       el.style.transform = `rotate(${imgData.rotation}deg)`;
     }
@@ -679,6 +680,7 @@ const PartyEditor = (() => {
 
   function startImageResize(startEvent, imgData, el) {
     const startSize = imgData.size;
+    const aspect = imgData.aspect || 1;
     const startClientY = startEvent.clientY || startEvent.pageY;
 
     function onMove(e) {
@@ -688,7 +690,7 @@ const PartyEditor = (() => {
       const newSize = Math.max(30, Math.min(250, startSize + dy));
       imgData.size = Math.round(newSize);
       el.style.width = imgData.size + 'px';
-      el.style.height = imgData.size + 'px';
+      el.style.height = Math.round(imgData.size / aspect) + 'px';
     }
 
     function onUp() {
@@ -742,12 +744,13 @@ const PartyEditor = (() => {
     document.addEventListener('touchend', onUp);
   }
 
-  function addImage(src) {
+  function addImage(src, aspect) {
     if (!cardState.images) cardState.images = [];
     const id = 'img-' + (++imageIdCounter);
     const imgObj = {
       id,
       src,
+      aspect: aspect || 1,
       x: 15 + Math.random() * 50,
       y: 15 + Math.random() * 50,
       size: 80,
@@ -1556,13 +1559,14 @@ const PartyEditor = (() => {
         const canvas = document.createElement('canvas');
         const maxSize = 300;
         let w = img.width, h = img.height;
+        const aspect = w / h;
         if (w > h && w > maxSize) { h = h * maxSize / w; w = maxSize; }
         else if (h > maxSize) { w = w * maxSize / h; h = maxSize; }
         canvas.width = w;
         canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         const src = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.8);
-        addImage(src);
+        addImage(src, aspect);
         updatePlacedImagesList();
       };
       img.src = e.target.result;
