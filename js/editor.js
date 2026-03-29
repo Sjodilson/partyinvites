@@ -219,14 +219,22 @@ const PartyEditor = (() => {
       }
 
       el.addEventListener('input', () => {
-        // Get text content excluding the icon prefix
-        let val = el.textContent;
-        if (fieldIcons[field]) {
-          const iconText = fieldIcons[field];
-          if (val.startsWith(iconText)) val = val.slice(iconText.length);
+        // Re-insert icon if browser destroyed it (mobile issue)
+        if (fieldIcons[field] && !el.querySelector('.card-field-icon')) {
+          const icon = document.createElement('span');
+          icon.className = 'card-field-icon';
+          icon.setAttribute('contenteditable', 'false');
+          icon.textContent = fieldIcons[field];
+          el.insertBefore(icon, el.firstChild);
         }
-        s.texts[field] = val;
-        syncPanelField(field, val);
+        // Get text content excluding the icon
+        let val = '';
+        el.childNodes.forEach(n => {
+          if (n.nodeType === Node.TEXT_NODE) val += n.textContent;
+          else if (!n.classList || !n.classList.contains('card-field-icon')) val += n.textContent;
+        });
+        s.texts[field] = val.trim();
+        syncPanelField(field, s.texts[field]);
         saveState();
       });
 
@@ -570,7 +578,13 @@ const PartyEditor = (() => {
       input.addEventListener('input', () => {
         cardState.texts[field] = input.value;
         const cardField = cardEl().querySelector(`[data-field="${field}"]`);
-        if (cardField) cardField.textContent = input.value;
+        if (cardField) {
+          // Preserve icon span if present
+          const icon = cardField.querySelector('.card-field-icon');
+          cardField.textContent = '';
+          if (icon) cardField.appendChild(icon);
+          cardField.appendChild(document.createTextNode(input.value));
+        }
         saveState();
       });
     });
