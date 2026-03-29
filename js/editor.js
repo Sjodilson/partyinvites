@@ -1548,6 +1548,7 @@ const PartyEditor = (() => {
   }
 
   function handleImageUpload(file) {
+    const isPng = file.type === 'image/png';
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
@@ -1560,7 +1561,7 @@ const PartyEditor = (() => {
         canvas.width = w;
         canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const src = canvas.toDataURL('image/jpeg', 0.8);
+        const src = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.8);
         addImage(src);
         updatePlacedImagesList();
       };
