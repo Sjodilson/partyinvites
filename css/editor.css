@@ -154,21 +154,78 @@
 }
 
 /* Card uploaded image */
-.card-image-container {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin: 0 auto 16px;
-  border: 3px solid rgba(255, 255, 255, 0.5);
-  position: relative;
-  z-index: 2;
+/* Placed images (freely positioned like stickers) */
+.card-image {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  z-index: 9;
+  border-radius: 6px;
+  overflow: visible;
+  transition: filter 0.15s ease;
 }
 
-.card-image-container img {
+.card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.card-image:hover {
+  filter: drop-shadow(0 2px 8px rgba(108, 92, 231, 0.35));
+}
+
+.card-image.selected {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.card-image.dragging {
+  cursor: grabbing;
+}
+
+.card-image .sticker-delete,
+.card-image .sticker-resize,
+.card-image .sticker-rotate {
+  /* Reuse sticker handle styles */
+}
+
+.card-image.selected .sticker-delete {
+  display: flex;
+}
+
+.card-image.selected .sticker-resize {
+  display: block;
+}
+
+.card-image.selected .sticker-rotate {
+  display: block;
+}
+
+/* Placed images list in panel */
+.placed-image-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-border-light);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  margin: 2px;
+  transition: background var(--transition);
+}
+
+.placed-image-item:hover {
+  background: var(--color-border);
+}
+
+.placed-image-thumb {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 4px;
 }
 
 /* ---------- Editor Panel ---------- */
@@ -497,31 +554,6 @@
   inset: 0;
   opacity: 0;
   cursor: pointer;
-}
-
-.image-preview {
-  width: 100%;
-  max-height: 160px;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  margin-bottom: 12px;
-}
-
-.btn-remove-image {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: var(--color-error);
-  color: white;
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-weight: 500;
-  transition: all var(--transition);
-}
-
-.btn-remove-image:hover {
-  opacity: 0.9;
 }
 
 /* ---------- Stickers on Card ---------- */

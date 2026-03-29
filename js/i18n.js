@@ -67,9 +67,12 @@ const PartyI18n = (() => {
       'editor.font.bodyFamily': 'Brödtext typsnitt',
       'editor.font.bodySize': 'Brödtext storlek',
 
-      'editor.image.upload': 'Ladda upp bild',
-      'editor.image.remove': 'Ta bort bild',
+      'editor.image.upload': 'Ladda upp bilder',
+      'editor.image.remove': 'Ta bort',
       'editor.image.drop': 'Dra och släpp eller klicka för att ladda upp',
+      'editor.image.placed': 'Uppladdade bilder',
+      'editor.image.clearAll': 'Ta bort alla bilder',
+      'editor.image.none': 'Inga bilder tillagda',
 
       'editor.stickers.title': 'Dekoration',
       'editor.stickers.add': 'Klicka för att lägga till på kortet',
@@ -310,9 +313,12 @@ const PartyI18n = (() => {
       'editor.font.bodyFamily': 'Body font',
       'editor.font.bodySize': 'Body size',
 
-      'editor.image.upload': 'Upload image',
-      'editor.image.remove': 'Remove image',
+      'editor.image.upload': 'Upload images',
+      'editor.image.remove': 'Remove',
       'editor.image.drop': 'Drag and drop or click to upload',
+      'editor.image.placed': 'Uploaded images',
+      'editor.image.clearAll': 'Remove all images',
+      'editor.image.none': 'No images added',
 
       'editor.stickers.title': 'Decorations',
       'editor.stickers.add': 'Click to add to card',

@@ -10,6 +10,7 @@ const PartyEditor = (() => {
   const MAX_HISTORY = 50;
   let selectedStickerId = null;
   let stickerIdCounter = 0;
+  let imageIdCounter = 0;
 
   const cardEl = () => document.getElementById('invitation-card');
 
@@ -75,7 +76,7 @@ const PartyEditor = (() => {
         headingSize: template.headingSize,
         bodySize: template.bodySize,
         textAlign: template.textAlign,
-        image: null,
+        images: [],
         stickers: [],
         borderRadius: parseInt(template.decorations.borderRadius) || 12,
         borderColor: template.colors.accent || parseBorderColor(template.decorations.borderStyle) || '#E0E0E0',
@@ -213,16 +214,8 @@ const PartyEditor = (() => {
     inner.className = 'card-inner';
     card.appendChild(inner);
 
-    // Image (if uploaded)
-    if (s.image) {
-      const imgContainer = document.createElement('div');
-      imgContainer.className = 'card-image-container';
-      const img = document.createElement('img');
-      img.src = s.image;
-      img.alt = '';
-      imgContainer.appendChild(img);
-      inner.appendChild(imgContainer);
-    }
+    // Images (uploaded, freely placed like stickers)
+    renderImages(card);
 
     // Text fields
     const fields = ['subtitle', 'title', 'date', 'location', 'rsvp', 'message', 'sender'];
@@ -307,10 +300,11 @@ const PartyEditor = (() => {
     // Render stickers on the card
     renderStickers(card);
 
-    // Deselect sticker when clicking card background
+    // Deselect sticker/image when clicking card background
     card.addEventListener('click', e => {
       if (e.target === card || e.target.classList.contains('card-inner') || e.target.classList.contains('card-decorations')) {
         deselectAllStickers();
+        deselectAllImages();
       }
     });
   }
@@ -501,6 +495,7 @@ const PartyEditor = (() => {
     document.querySelectorAll('.card-sticker').forEach(el => {
       el.classList.toggle('selected', el.getAttribute('data-sticker-id') === id);
     });
+    deselectAllImages();
   }
 
   function deselectAllStickers() {
@@ -549,6 +544,290 @@ const PartyEditor = (() => {
     saveState();
     updatePlacedStickersList();
   }
+
+  /* ---------- Image Rendering & Drag (like stickers) ---------- */
+  function renderImages(card) {
+    if (!cardState.images || !cardState.images.length) return;
+    cardState.images.forEach(imgData => {
+      const el = createImageElement(imgData);
+      card.appendChild(el);
+    });
+  }
+
+  function createImageElement(imgData) {
+    const el = document.createElement('div');
+    el.className = 'card-image';
+    el.setAttribute('data-image-id', imgData.id);
+    el.style.left = imgData.x + '%';
+    el.style.top = imgData.y + '%';
+    el.style.width = imgData.size + 'px';
+    el.style.height = imgData.size + 'px';
+    if (imgData.rotation) {
+      el.style.transform = `rotate(${imgData.rotation}deg)`;
+    }
+
+    const img = document.createElement('img');
+    img.src = imgData.src;
+    img.alt = '';
+    img.draggable = false;
+    el.appendChild(img);
+
+    // Delete button
+    const delBtn = document.createElement('span');
+    delBtn.className = 'sticker-delete';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      removeImage(imgData.id);
+    });
+    el.appendChild(delBtn);
+
+    // Resize handle
+    const resizeBtn = document.createElement('span');
+    resizeBtn.className = 'sticker-resize';
+    el.appendChild(resizeBtn);
+
+    // Rotate handle
+    const rotateBtn = document.createElement('span');
+    rotateBtn.className = 'sticker-rotate';
+    el.appendChild(rotateBtn);
+
+    el.addEventListener('mousedown', e => {
+      if (e.target === delBtn) return;
+      e.stopPropagation();
+      e.preventDefault();
+      selectImage(imgData.id);
+      if (e.target === resizeBtn) {
+        startImageResize(e, imgData, el);
+      } else if (e.target === rotateBtn) {
+        startImageRotate(e, imgData, el);
+      } else {
+        startImageDrag(e, imgData, el);
+      }
+    });
+
+    el.addEventListener('touchstart', e => {
+      if (e.target === delBtn) return;
+      e.stopPropagation();
+      selectImage(imgData.id);
+      const touch = e.touches[0];
+      if (e.target === resizeBtn) {
+        startImageResize(touch, imgData, el);
+      } else if (e.target === rotateBtn) {
+        startImageRotate(touch, imgData, el);
+      } else {
+        startImageDrag(touch, imgData, el);
+      }
+    }, { passive: false });
+
+    return el;
+  }
+
+  let selectedImageId = null;
+
+  function selectImage(id) {
+    selectedImageId = id;
+    document.querySelectorAll('.card-image').forEach(el => {
+      el.classList.toggle('selected', el.getAttribute('data-image-id') === id);
+    });
+    // Deselect stickers when selecting an image
+    deselectAllStickers();
+  }
+
+  function deselectAllImages() {
+    selectedImageId = null;
+    document.querySelectorAll('.card-image').forEach(el => el.classList.remove('selected'));
+  }
+
+  function startImageDrag(startEvent, imgData, el) {
+    const card = cardEl();
+    const rect = card.getBoundingClientRect();
+    const startX = (startEvent.clientX || startEvent.pageX) - rect.left;
+    const startY = (startEvent.clientY || startEvent.pageY) - rect.top;
+    const startPctX = imgData.x;
+    const startPctY = imgData.y;
+    el.classList.add('dragging');
+
+    function onMove(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const dx = ev.clientX - rect.left - startX;
+      const dy = ev.clientY - rect.top - startY;
+      const newX = Math.max(-10, Math.min(95, startPctX + (dx / rect.width) * 100));
+      const newY = Math.max(-10, Math.min(95, startPctY + (dy / rect.height) * 100));
+      el.style.left = newX + '%';
+      el.style.top = newY + '%';
+      imgData.x = Math.round(newX * 10) / 10;
+      imgData.y = Math.round(newY * 10) / 10;
+    }
+
+    function onUp() {
+      el.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      saveState();
+      updatePlacedImagesList();
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+
+  function startImageResize(startEvent, imgData, el) {
+    const startSize = imgData.size;
+    const startClientY = startEvent.clientY || startEvent.pageY;
+
+    function onMove(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const dy = ev.clientY - startClientY;
+      const newSize = Math.max(30, Math.min(250, startSize + dy));
+      imgData.size = Math.round(newSize);
+      el.style.width = imgData.size + 'px';
+      el.style.height = imgData.size + 'px';
+    }
+
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      saveState();
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+
+  function startImageRotate(startEvent, imgData, el) {
+    const elRect = el.getBoundingClientRect();
+    const centerX = elRect.left + elRect.width / 2;
+    const centerY = elRect.top + elRect.height / 2;
+    const startAngle = Math.atan2(
+      (startEvent.clientY || startEvent.pageY) - centerY,
+      (startEvent.clientX || startEvent.pageX) - centerX
+    );
+    const startRotation = imgData.rotation || 0;
+    el.classList.add('rotating');
+
+    function onMove(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const angle = Math.atan2(ev.clientY - centerY, ev.clientX - centerX);
+      const delta = (angle - startAngle) * (180 / Math.PI);
+      const newRotation = Math.round(startRotation + delta);
+      imgData.rotation = newRotation;
+      el.style.transform = `rotate(${newRotation}deg)`;
+    }
+
+    function onUp() {
+      el.classList.remove('rotating');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      saveState();
+      updatePlacedImagesList();
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+
+  function addImage(src) {
+    if (!cardState.images) cardState.images = [];
+    const id = 'img-' + (++imageIdCounter);
+    const imgObj = {
+      id,
+      src,
+      x: 15 + Math.random() * 50,
+      y: 15 + Math.random() * 50,
+      size: 80,
+      rotation: 0,
+    };
+    cardState.images.push(imgObj);
+
+    const card = cardEl();
+    if (card) {
+      const el = createImageElement(imgObj);
+      card.appendChild(el);
+      selectImage(id);
+    }
+    saveState();
+    updatePlacedImagesList();
+  }
+
+  function removeImage(id) {
+    if (!cardState.images) return;
+    cardState.images = cardState.images.filter(i => i.id !== id);
+    const el = document.querySelector(`[data-image-id="${id}"]`);
+    if (el) el.remove();
+    if (selectedImageId === id) selectedImageId = null;
+    saveState();
+    updatePlacedImagesList();
+  }
+
+  function clearAllImages() {
+    cardState.images = [];
+    document.querySelectorAll('.card-image').forEach(el => el.remove());
+    selectedImageId = null;
+    saveState();
+    updatePlacedImagesList();
+  }
+
+  function updatePlacedImagesList() {
+    const listEl = document.getElementById('placed-images-list');
+    const clearBtn = document.getElementById('btn-clear-images');
+    if (!listEl) return;
+
+    const images = cardState.images || [];
+    const t = PartyI18n.t;
+
+    if (images.length === 0) {
+      listEl.innerHTML = `<div class="sticker-hint">${t('editor.image.none')}</div>`;
+      if (clearBtn) clearBtn.classList.add('hidden');
+      return;
+    }
+
+    listEl.innerHTML = '';
+    images.forEach(img => {
+      const item = document.createElement('div');
+      item.className = 'placed-image-item';
+      const thumb = document.createElement('img');
+      thumb.src = img.src;
+      thumb.className = 'placed-image-thumb';
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-placed';
+      removeBtn.title = t('editor.image.remove');
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => removeImage(img.id));
+      item.appendChild(thumb);
+      item.appendChild(removeBtn);
+      item.addEventListener('mouseenter', () => {
+        const el = document.querySelector(`[data-image-id="${img.id}"]`);
+        if (el) el.classList.add('selected');
+      });
+      item.addEventListener('mouseleave', () => {
+        const el = document.querySelector(`[data-image-id="${img.id}"]`);
+        if (el && selectedImageId !== img.id) el.classList.remove('selected');
+      });
+      listEl.appendChild(item);
+    });
+
+    if (clearBtn) {
+      clearBtn.classList.remove('hidden');
+      clearBtn.onclick = () => clearAllImages();
+    }
+  }
+
   function buildPanels() {
     buildTextPanel();
     buildDesignPanel();
@@ -1110,18 +1389,18 @@ const PartyEditor = (() => {
     // --- Image upload section ---
     html += `<div class="panel-section">
       <div class="panel-section-title">${t('editor.image.upload')}</div>
-      <div class="image-upload-area ${cardState.image ? 'has-image' : ''}" id="image-upload-area">`;
-
-    if (cardState.image) {
-      html += `<img src="${cardState.image}" alt="" class="image-preview">
-        <button class="btn-remove-image" id="btn-remove-image">${t('editor.image.remove')}</button>`;
-    } else {
-      html += `<div class="image-upload-icon">📸</div>
-        <div class="image-upload-text">${t('editor.image.drop')}</div>`;
-    }
-
-    html += `<input type="file" accept="image/*" id="image-input">
+      <div class="image-upload-area" id="image-upload-area">
+        <div class="image-upload-icon">📸</div>
+        <div class="image-upload-text">${t('editor.image.drop')}</div>
+        <input type="file" accept="image/*" id="image-input" multiple>
       </div>
+    </div>`;
+
+    // --- Placed images section ---
+    html += `<div class="panel-section" id="placed-images-section">
+      <div class="panel-section-title">${t('editor.image.placed')}</div>
+      <div class="placed-images-list" id="placed-images-list"></div>
+      <button class="btn-clear-stickers hidden" id="btn-clear-images">${t('editor.image.clearAll')}</button>
     </div>`;
 
     // --- Sticker library section ---
@@ -1144,6 +1423,9 @@ const PartyEditor = (() => {
     // Bind image upload
     bindImageUpload(panel);
 
+    // Update placed images list
+    updatePlacedImagesList();
+
     // Build sticker category buttons & grid
     buildStickerLibrary();
 
@@ -1154,12 +1436,13 @@ const PartyEditor = (() => {
   function bindImageUpload(panel) {
     const input = panel.querySelector('#image-input');
     const area = panel.querySelector('#image-upload-area');
-    const removeBtn = panel.querySelector('#btn-remove-image');
 
     if (input) {
       input.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (file) handleImageUpload(file);
+        Array.from(e.target.files).forEach(file => {
+          if (file && file.type.startsWith('image/')) handleImageUpload(file);
+        });
+        input.value = ''; // allow re-uploading same file
       });
     }
 
@@ -1174,20 +1457,9 @@ const PartyEditor = (() => {
       area.addEventListener('drop', e => {
         e.preventDefault();
         area.style.borderColor = '';
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-          handleImageUpload(file);
-        }
-      });
-    }
-
-    if (removeBtn) {
-      removeBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        cardState.image = null;
-        renderCard();
-        buildDecorPanel();
-        saveState();
+        Array.from(e.dataTransfer.files).forEach(file => {
+          if (file && file.type.startsWith('image/')) handleImageUpload(file);
+        });
       });
     }
   }
@@ -1278,7 +1550,6 @@ const PartyEditor = (() => {
   function handleImageUpload(file) {
     const reader = new FileReader();
     reader.onload = e => {
-      // Resize image to reasonable size to keep localStorage manageable
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -1289,10 +1560,9 @@ const PartyEditor = (() => {
         canvas.width = w;
         canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        cardState.image = canvas.toDataURL('image/jpeg', 0.8);
-        renderCard();
-        buildDecorPanel();
-        saveState();
+        const src = canvas.toDataURL('image/jpeg', 0.8);
+        addImage(src);
+        updatePlacedImagesList();
       };
       img.src = e.target.result;
     };
