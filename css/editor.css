@@ -130,7 +130,8 @@
 }
 
 .card-field[data-field="date"],
-.card-field[data-field="location"] {
+.card-field[data-field="location"],
+.card-field[data-field="rsvp"] {
   font-size: 0.65em;
   margin-bottom: 3px;
   font-weight: 500;
@@ -757,15 +758,17 @@
     min-height: 50vh;
   }
 
+  .card-wrapper {
+    transform: scale(0.8);
+    transform-origin: top center;
+    margin-bottom: -20%; /* compensate for layout box being larger than visual */
+  }
+
   .editor-panel {
     width: 100%;
     border-left: none;
     border-top: 1px solid var(--color-border);
     max-height: 50vh;
-  }
-
-  .card {
-    width: 300px;
   }
 }
 
@@ -787,8 +790,10 @@
     margin: 0;
   }
 
-  .card {
-    width: 260px;
+  .card-wrapper {
+    transform: scale(0.65);
+    transform-origin: top center;
+    margin-bottom: -35%; /* compensate for layout box being larger than visual */
   }
 
   .editor-panel {

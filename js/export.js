@@ -57,6 +57,12 @@ const PartyExport = (() => {
     clone.style.margin = '0';
     clone.style.filter = 'none';
     clone.style.animation = 'none';
+    clone.style.transform = 'none';
+    // Ensure rounded corners clip content (more reliable than overflow:hidden)
+    const br = window.getComputedStyle(card).borderRadius || '16px';
+    clone.style.overflow = 'hidden';
+    clone.style.borderRadius = br;
+    clone.style.clipPath = `inset(0 round ${br})`;
 
     // 4. Remove editor-only interactive elements & states
     clone.querySelectorAll('.sticker-delete, .sticker-resize, .sticker-rotate')
