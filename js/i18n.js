@@ -40,6 +40,7 @@ const PartyI18n = (() => {
       'editor.field.subtitle': 'Underrubrik',
       'editor.field.date': 'Datum & Tid',
       'editor.field.location': 'Plats',
+      'editor.field.rsvp': 'OSA senast (valfritt)',
       'editor.field.message': 'Meddelande',
       'editor.field.sender': 'Avsändare',
 
@@ -282,6 +283,7 @@ const PartyI18n = (() => {
       'editor.field.subtitle': 'Subtitle',
       'editor.field.date': 'Date & Time',
       'editor.field.location': 'Location',
+      'editor.field.rsvp': 'RSVP by (optional)',
       'editor.field.message': 'Message',
       'editor.field.sender': 'From',
 

@@ -807,7 +807,8 @@ const PartyTemplates = (() => {
   function getDefaultTexts(template) {
     if (template.texts) {
       const lang = PartyI18n.getLanguage();
-      return template.texts[lang] || template.texts.sv;
+      const txt = template.texts[lang] || template.texts.sv;
+      return { ...txt, rsvp: txt.rsvp || '' };
     }
     const t = PartyI18n.t;
     const p = template.i18nPrefix;
@@ -816,6 +817,7 @@ const PartyTemplates = (() => {
       subtitle: t(`${p}.subtitle`),
       date: t(`${p}.date`),
       location: t(`${p}.location`),
+      rsvp: '',
       message: t(`${p}.message`),
       sender: t(`${p}.sender`),
     };

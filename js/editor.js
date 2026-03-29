@@ -225,8 +225,8 @@ const PartyEditor = (() => {
     }
 
     // Text fields
-    const fields = ['subtitle', 'title', 'date', 'location', 'message', 'sender'];
-    const fieldIcons = { date: '📅 ', location: '📍 ' };
+    const fields = ['subtitle', 'title', 'date', 'location', 'rsvp', 'message', 'sender'];
+    const fieldIcons = { date: '📅 ', location: '📍 ', rsvp: '✉️ ' };
     fields.forEach(field => {
       const el = document.createElement('div');
       el.className = 'card-field';
@@ -249,6 +249,11 @@ const PartyEditor = (() => {
         el.insertAdjacentHTML('beforeend', text.split('\n').map(line => escapeHtml(line)).join('<br>'));
       } else {
         el.appendChild(document.createTextNode(text));
+      }
+
+      // Hide optional fields when empty
+      if (field === 'rsvp' && !text) {
+        el.style.display = 'none';
       }
 
       // Apply fonts
@@ -560,6 +565,7 @@ const PartyEditor = (() => {
       { key: 'subtitle', type: 'text' },
       { key: 'date', type: 'text' },
       { key: 'location', type: 'text' },
+      { key: 'rsvp', type: 'text' },
       { key: 'message', type: 'textarea' },
       { key: 'sender', type: 'text' },
     ];
@@ -663,6 +669,10 @@ const PartyEditor = (() => {
           cardField.textContent = '';
           if (icon) cardField.appendChild(icon);
           cardField.appendChild(document.createTextNode(input.value));
+          // Show/hide optional fields
+          if (field === 'rsvp') {
+            cardField.style.display = input.value.trim() ? '' : 'none';
+          }
         }
         saveState();
       });
