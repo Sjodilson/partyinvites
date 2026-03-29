@@ -577,12 +577,20 @@ const PartyEditor = (() => {
       const val = escapeHtml(cardState.texts[f.key] || '');
       if (f.type === 'textarea') {
         html += `<div class="panel-field">
-          <label>${t('editor.field.' + f.key)}</label>
+          <div class="panel-field-header">
+            <label>${t('editor.field.' + f.key)}</label>
+            <button class="emoji-toggle-btn" data-emoji-for="${f.key}" title="Emoji">😀</button>
+          </div>
+          <div class="emoji-picker-dropdown hidden" id="emoji-picker-${f.key}"></div>
           <textarea data-sync-field="${f.key}">${val}</textarea>
         </div>`;
       } else {
         html += `<div class="panel-field">
-          <label>${t('editor.field.' + f.key)}</label>
+          <div class="panel-field-header">
+            <label>${t('editor.field.' + f.key)}</label>
+            <button class="emoji-toggle-btn" data-emoji-for="${f.key}" title="Emoji">😀</button>
+          </div>
+          <div class="emoji-picker-dropdown hidden" id="emoji-picker-${f.key}"></div>
           <input type="text" data-sync-field="${f.key}" value="${val}">
         </div>`;
       }
@@ -741,6 +749,75 @@ const PartyEditor = (() => {
         saveState();
       });
     });
+
+    // Emoji picker toggles
+    panel.querySelectorAll('.emoji-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const fieldKey = btn.dataset.emojiFor;
+        const picker = document.getElementById('emoji-picker-' + fieldKey);
+        if (!picker) return;
+        const wasHidden = picker.classList.contains('hidden');
+        // Close all other pickers
+        panel.querySelectorAll('.emoji-picker-dropdown').forEach(p => p.classList.add('hidden'));
+        if (wasHidden) {
+          buildEmojiPicker(picker, fieldKey);
+          picker.classList.remove('hidden');
+        }
+      });
+    });
+  }
+
+  function buildEmojiPicker(container, fieldKey) {
+    if (container.dataset.built) return; // only build once
+    container.dataset.built = '1';
+
+    // Category tabs
+    const tabs = document.createElement('div');
+    tabs.className = 'emoji-picker-tabs';
+    stickerLibrary.forEach((cat, i) => {
+      const tab = document.createElement('button');
+      tab.className = 'emoji-cat-tab' + (i === 0 ? ' active' : '');
+      tab.textContent = cat.stickers[0]; // first emoji as icon
+      tab.title = cat.id;
+      tab.addEventListener('click', () => {
+        tabs.querySelectorAll('.emoji-cat-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        showCategory(i);
+      });
+      tabs.appendChild(tab);
+    });
+    container.appendChild(tabs);
+
+    const grid = document.createElement('div');
+    grid.className = 'emoji-picker-grid';
+    container.appendChild(grid);
+
+    function showCategory(idx) {
+      grid.innerHTML = '';
+      stickerLibrary[idx].stickers.forEach(emoji => {
+        const btn = document.createElement('button');
+        btn.className = 'emoji-pick';
+        btn.textContent = emoji;
+        btn.addEventListener('click', () => insertEmojiInField(fieldKey, emoji));
+        grid.appendChild(btn);
+      });
+    }
+    showCategory(0);
+  }
+
+  function insertEmojiInField(fieldKey, emoji) {
+    // Insert into panel input/textarea
+    const input = document.querySelector(`[data-sync-field="${fieldKey}"]`);
+    if (input) {
+      const start = input.selectionStart || input.value.length;
+      const before = input.value.slice(0, start);
+      const after = input.value.slice(input.selectionEnd || start);
+      input.value = before + emoji + after;
+      input.selectionStart = input.selectionEnd = start + emoji.length;
+      input.focus();
+      // Trigger the sync
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }
 
   function buildDesignPanel() {
