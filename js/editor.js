@@ -56,7 +56,7 @@ const PartyEditor = (() => {
     if (!template) return;
     currentTemplate = template;
 
-    const saved = (!template.defaultTexts) ? loadFromStorage(template.id) : null;
+    const saved = null; // Always start fresh from template defaults
     if (saved) {
       cardState = saved;
       // Backfill new fields for older saved states
@@ -265,7 +265,7 @@ const PartyEditor = (() => {
 
       // Apply body font size to non-heading fields
       if (field !== 'title' && field !== 'subtitle') {
-        el.style.fontSize = s.bodySize || '1rem';
+        el.style.fontSize = s.bodySize || '0.7rem';
       }
 
       el.addEventListener('input', () => {
@@ -607,7 +607,7 @@ const PartyEditor = (() => {
       `<option value="${f.value}" ${cardState.fonts.body.includes(f.label) ? 'selected' : ''}>${f.label}</option>`
     ).join('');
 
-    const bodySize = parseFloat(cardState.bodySize) || 1;
+    const bodySize = parseFloat(cardState.bodySize) || 0.7;
 
     html += `<div class="panel-section">
       <div class="panel-section-title">${t('editor.font.family')}</div>
@@ -630,7 +630,7 @@ const PartyEditor = (() => {
         <label>${t('editor.font.bodySize')}</label>
         <div class="size-slider-group">
           <input type="range" id="body-size" min="0.55" max="1.4" step="0.05" value="${bodySize}">
-          <span class="size-value" id="body-size-val">${cardState.bodySize || '1rem'}</span>
+          <span class="size-value" id="body-size-val">${cardState.bodySize || '0.7rem'}</span>
         </div>
       </div>
       <div class="panel-field">
