@@ -190,19 +190,7 @@
 .card-image .sticker-delete,
 .card-image .sticker-resize,
 .card-image .sticker-rotate {
-  /* Reuse sticker handle styles */
-}
-
-.card-image.selected .sticker-delete {
-  display: flex;
-}
-
-.card-image.selected .sticker-resize {
-  display: block;
-}
-
-.card-image.selected .sticker-rotate {
-  display: block;
+  /* Base styles inherited from shared selectors above */
 }
 
 /* Placed images list in panel */
@@ -584,7 +572,8 @@
   z-index: 20;
 }
 
-.card-sticker .sticker-delete {
+.card-sticker .sticker-delete,
+.card-image .sticker-delete {
   position: absolute;
   top: -10px;
   right: -10px;
@@ -603,11 +592,13 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
-.card-sticker.selected .sticker-delete {
+.card-sticker.selected .sticker-delete,
+.card-image.selected .sticker-delete {
   display: block;
 }
 
-.card-sticker .sticker-resize {
+.card-sticker .sticker-resize,
+.card-image .sticker-resize {
   position: absolute;
   bottom: -8px;
   right: -8px;
@@ -622,11 +613,13 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
-.card-sticker.selected .sticker-resize {
+.card-sticker.selected .sticker-resize,
+.card-image.selected .sticker-resize {
   display: block;
 }
 
-.card-sticker .sticker-rotate {
+.card-sticker .sticker-rotate,
+.card-image .sticker-rotate {
   position: absolute;
   bottom: -8px;
   left: -8px;
@@ -641,7 +634,8 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
-.card-sticker .sticker-rotate::after {
+.card-sticker .sticker-rotate::after,
+.card-image .sticker-rotate::after {
   content: '↻';
   position: absolute;
   top: 50%;
@@ -652,11 +646,13 @@
   color: white;
 }
 
-.card-sticker.selected .sticker-rotate {
+.card-sticker.selected .sticker-rotate,
+.card-image.selected .sticker-rotate {
   display: block;
 }
 
-.card-sticker.rotating {
+.card-sticker.rotating,
+.card-image.rotating {
   opacity: 0.9;
   z-index: 20;
 }
