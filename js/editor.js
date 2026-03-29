@@ -193,6 +193,7 @@ const PartyEditor = (() => {
       if (fieldIcons[field]) {
         const icon = document.createElement('span');
         icon.className = 'card-field-icon';
+        icon.setAttribute('contenteditable', 'false');
         icon.textContent = fieldIcons[field];
         el.appendChild(icon);
       }
