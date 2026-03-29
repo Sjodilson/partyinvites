@@ -14,9 +14,16 @@ const PartyI18n = (() => {
       'gallery.category.all': 'Alla',
       'gallery.category.kids': 'Barnkalas',
       'gallery.category.birthday': 'Födelsedag',
+      'gallery.category.sport': '🏆 Sport',
+      'gallery.category.activity': '🎮 Aktiviteter',
+      'gallery.category.holiday': '🎄 Högtider',
+      'gallery.category.event': '🥂 Event',
       'gallery.category.garden': 'Trädgårdsfest',
       'gallery.category.dinner': 'Middag & Fest',
       'gallery.category.simple': 'Enkel',
+
+      'gallery.search.placeholder': 'Sök mallar... t.ex. bowling, halloween, baby shower',
+      'gallery.search.noResults': 'Inga mallar hittades. Prova ett annat sökord!',
 
       'editor.back': '← Tillbaka',
       'editor.export': 'Exportera',
@@ -225,12 +232,6 @@ const PartyI18n = (() => {
 
       'modal.close': 'Stäng',
       'cancel': 'Avbryt',
-
-      'generator.title': 'Skapa en egen mall',
-      'generator.desc': 'Beskriv ditt kalas så skapar vi en unik mall åt dig!',
-      'generator.placeholder': 'T.ex. bowlingkalas, rymdkalas, halloween...',
-      'generator.button': 'Skapa mall ✨',
-      'generator.suggestions': 'Förslag:',
     },
 
     en: {
@@ -242,9 +243,16 @@ const PartyI18n = (() => {
       'gallery.category.all': 'All',
       'gallery.category.kids': 'Kids Party',
       'gallery.category.birthday': 'Birthday',
+      'gallery.category.sport': '🏆 Sports',
+      'gallery.category.activity': '🎮 Activities',
+      'gallery.category.holiday': '🎄 Holidays',
+      'gallery.category.event': '🥂 Events',
       'gallery.category.garden': 'Garden Party',
       'gallery.category.dinner': 'Dinner & Party',
       'gallery.category.simple': 'Simple',
+
+      'gallery.search.placeholder': 'Search templates... e.g. bowling, halloween, baby shower',
+      'gallery.search.noResults': 'No templates found. Try a different search term!',
 
       'editor.back': '← Back',
       'editor.export': 'Export',
@@ -453,12 +461,6 @@ const PartyI18n = (() => {
 
       'modal.close': 'Close',
       'cancel': 'Cancel',
-
-      'generator.title': 'Create your own template',
-      'generator.desc': 'Describe your party and we\'ll create a unique template for you!',
-      'generator.placeholder': 'E.g. bowling party, space party, halloween...',
-      'generator.button': 'Create template ✨',
-      'generator.suggestions': 'Suggestions:',
     },
   };
 

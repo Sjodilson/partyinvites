@@ -12,7 +12,7 @@ const PartyApp = (() => {
 
     renderGallery();
     bindGlobalEvents();
-    bindThemeGenerator();
+    bindSearch();
     updateLanguageButtons();
   }
 
@@ -56,9 +56,21 @@ const PartyApp = (() => {
     const grid = document.getElementById('template-grid');
     if (!grid) return;
 
-    const t = PartyI18n.t;
-    const templates = PartyTemplates.getByCategory(currentCategory);
+    let templates;
+    if (searchQuery) {
+      templates = PartyTemplates.search(searchQuery);
+    } else {
+      templates = PartyTemplates.getByCategory(currentCategory);
+    }
     grid.innerHTML = '';
+
+    if (templates.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'gallery-empty';
+      empty.textContent = PartyI18n.t('gallery.search.noResults');
+      grid.appendChild(empty);
+      return;
+    }
 
     templates.forEach((tpl, idx) => {
       const card = document.createElement('div');
@@ -130,7 +142,7 @@ const PartyApp = (() => {
 
       const nameEl = document.createElement('div');
       nameEl.className = 'template-card-name';
-      nameEl.textContent = t(`${tpl.i18nPrefix}.name`);
+      nameEl.textContent = PartyTemplates.getName(tpl);
 
       card.appendChild(preview);
       card.appendChild(nameEl);
@@ -151,65 +163,29 @@ const PartyApp = (() => {
     renderGallery();
   }
 
-  /* ---------- Theme Generator ---------- */
-  function bindThemeGenerator() {
-    const input = document.getElementById('theme-input');
-    const btn = document.getElementById('theme-create-btn');
-    const suggestionsContainer = document.getElementById('theme-suggestions');
+  /* ---------- Search ---------- */
+  let searchQuery = '';
 
-    if (!input || !btn) return;
+  function bindSearch() {
+    const input = document.getElementById('search-input');
+    const clearBtn = document.getElementById('search-clear');
+    if (!input) return;
 
-    function generateFromInput() {
-      const value = input.value.trim();
-      if (!value) {
-        input.focus();
-        return;
-      }
-      const template = PartyThemeGenerator.generate(value);
-      if (template) {
+    input.addEventListener('input', () => {
+      searchQuery = input.value.trim();
+      clearBtn && clearBtn.classList.toggle('hidden', !searchQuery);
+      renderTemplateGrid();
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
         input.value = '';
-        openEditor(template);
-      }
-    }
-
-    btn.addEventListener('click', generateFromInput);
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        generateFromInput();
-      }
-    });
-
-    renderSuggestionChips(suggestionsContainer);
-  }
-
-  function renderSuggestionChips(container) {
-    if (!container) return;
-    const suggestions = PartyThemeGenerator.getSuggestions();
-    // Show a curated subset (8 diverse suggestions)
-    const curated = pickDiverseSuggestions(suggestions, 8);
-    const t = PartyI18n.t;
-    container.innerHTML = `<span class="theme-suggestions-label">${t('generator.suggestions')}</span>`;
-    curated.forEach(s => {
-      const chip = document.createElement('button');
-      chip.className = 'theme-suggestion-chip';
-      chip.innerHTML = `<span class="chip-emoji">${s.title.match(/[\p{Emoji}]/u)?.[0] || '🎉'}</span> ${s.keyword}`;
-      chip.addEventListener('click', () => {
-        const template = PartyThemeGenerator.generate(s.keyword);
-        if (template) openEditor(template);
+        searchQuery = '';
+        clearBtn.classList.add('hidden');
+        input.focus();
+        renderTemplateGrid();
       });
-      container.appendChild(chip);
-    });
-  }
-
-  function pickDiverseSuggestions(allSuggestions, count) {
-    if (allSuggestions.length <= count) return allSuggestions;
-    const step = Math.floor(allSuggestions.length / count);
-    const result = [];
-    for (let i = 0; i < allSuggestions.length && result.length < count; i += step) {
-      result.push(allSuggestions[i]);
     }
-    return result;
   }
 
   /* ---------- Modal Management ---------- */
@@ -299,7 +275,6 @@ const PartyApp = (() => {
         // Re-render current view
         if (currentView === 'gallery') {
           renderGallery();
-          renderSuggestionChips(document.getElementById('theme-suggestions'));
         } else if (currentView === 'editor') {
           // Rebuild panels with new language (keep card state)
           PartyEditor.buildPanels();
