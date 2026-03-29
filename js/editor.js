@@ -78,7 +78,7 @@ const PartyEditor = (() => {
         image: null,
         stickers: [],
         borderRadius: parseInt(template.decorations.borderRadius) || 12,
-        borderColor: parseBorderColor(template.decorations.borderStyle) || '#E0E0E0',
+        borderColor: template.colors.accent || parseBorderColor(template.decorations.borderStyle) || '#E0E0E0',
         borderStyle: parseBorderStyle(template.decorations.borderStyle) || 'solid',
         borderWidth: parseBorderWidth(template.decorations.borderStyle) || 2,
         decorationType: template.decorations.type || 'confetti',
@@ -629,7 +629,7 @@ const PartyEditor = (() => {
       <div class="panel-field">
         <label>${t('editor.font.bodySize')}</label>
         <div class="size-slider-group">
-          <input type="range" id="body-size" min="0.75" max="1.4" step="0.05" value="${bodySize}">
+          <input type="range" id="body-size" min="0.55" max="1.4" step="0.05" value="${bodySize}">
           <span class="size-value" id="body-size-val">${cardState.bodySize || '1rem'}</span>
         </div>
       </div>
@@ -817,6 +817,13 @@ const PartyEditor = (() => {
       input.addEventListener('input', () => {
         const key = input.dataset.colorKey;
         cardState.colors[key] = input.value;
+        // Accent color also drives the border color
+        if (key === 'accent') {
+          cardState.borderColor = input.value;
+          applyBorderToCard();
+          const borderPicker = panel.querySelector('#border-color');
+          if (borderPicker) borderPicker.value = input.value;
+        }
         applyColors();
         saveState();
       });
