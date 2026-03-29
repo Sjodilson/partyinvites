@@ -13,6 +13,24 @@ const PartyEditor = (() => {
 
   const cardEl = () => document.getElementById('invitation-card');
 
+  /* ---------- Border Parsing Helpers ---------- */
+  function parseBorderColor(borderStr) {
+    if (!borderStr || borderStr === 'none') return '#E0E0E0';
+    const match = borderStr.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/);
+    return match ? match[0] : '#E0E0E0';
+  }
+  function parseBorderStyle(borderStr) {
+    if (!borderStr || borderStr === 'none') return 'none';
+    const styles = ['solid', 'dashed', 'dotted', 'double'];
+    for (const s of styles) { if (borderStr.includes(s)) return s; }
+    return 'solid';
+  }
+  function parseBorderWidth(borderStr) {
+    if (!borderStr || borderStr === 'none') return 0;
+    const match = borderStr.match(/(\d+)px/);
+    return match ? parseInt(match[1]) : 2;
+  }
+
   /* ---------- Sticker Library ---------- */
   const stickerLibrary = [
     { id: 'party',     stickers: ['🎈','🎉','🎊','🪅','🎆','🎇','✨','🪩','🎁','🎀','🪄','🎗️'] },
@@ -41,6 +59,12 @@ const PartyEditor = (() => {
     const saved = (!template.defaultTexts) ? loadFromStorage(template.id) : null;
     if (saved) {
       cardState = saved;
+      // Backfill new fields for older saved states
+      if (cardState.borderRadius === undefined) cardState.borderRadius = parseInt(template.decorations.borderRadius) || 12;
+      if (cardState.borderColor === undefined) cardState.borderColor = parseBorderColor(template.decorations.borderStyle) || '#E0E0E0';
+      if (cardState.borderStyle === undefined) cardState.borderStyle = parseBorderStyle(template.decorations.borderStyle) || 'solid';
+      if (cardState.borderWidth === undefined) cardState.borderWidth = parseBorderWidth(template.decorations.borderStyle) || 2;
+      if (cardState.decorationType === undefined) cardState.decorationType = template.decorations.type || 'confetti';
     } else {
       const defaults = template.defaultTexts || PartyTemplates.getDefaultTexts(template);
       cardState = {
@@ -53,6 +77,11 @@ const PartyEditor = (() => {
         textAlign: template.textAlign,
         image: null,
         stickers: [],
+        borderRadius: parseInt(template.decorations.borderRadius) || 12,
+        borderColor: parseBorderColor(template.decorations.borderStyle) || '#E0E0E0',
+        borderStyle: parseBorderStyle(template.decorations.borderStyle) || 'solid',
+        borderWidth: parseBorderWidth(template.decorations.borderStyle) || 2,
+        decorationType: template.decorations.type || 'confetti',
       };
     }
 
@@ -72,11 +101,21 @@ const PartyEditor = (() => {
       { text: '🎈', style: 'position:absolute;font-size:2rem;opacity:0.2;top:12px;left:12px;transform:rotate(-15deg)' },
       { text: '🎉', style: 'position:absolute;font-size:2rem;opacity:0.2;bottom:12px;right:12px;transform:rotate(15deg)' },
     ],
+    balloons: [
+      { text: '🎈', style: 'position:absolute;font-size:2rem;opacity:0.2;top:10px;left:10px' },
+      { text: '🎈', style: 'position:absolute;font-size:1.5rem;opacity:0.15;top:8px;right:16px;transform:rotate(15deg)' },
+      { text: '🎈', style: 'position:absolute;font-size:1.8rem;opacity:0.15;bottom:10px;left:20px;transform:rotate(-10deg)' },
+    ],
+    stars: [
+      { text: '⭐', style: 'position:absolute;font-size:1.3rem;opacity:0.2;top:10px;left:10px' },
+      { text: '⭐', style: 'position:absolute;font-size:1rem;opacity:0.15;top:14px;right:14px' },
+      { text: '⭐', style: 'position:absolute;font-size:1.1rem;opacity:0.15;bottom:12px;left:50%;transform:translateX(-50%)' },
+    ],
     elegant: [
       { text: '✦', style: 'position:absolute;font-size:1.2rem;opacity:0.25;top:16px;left:50%;transform:translateX(-50%)' },
       { text: '✦', style: 'position:absolute;font-size:1.2rem;opacity:0.25;bottom:16px;left:50%;transform:translateX(-50%)' },
     ],
-    botanical: [
+    garden: [
       { text: '🌿', style: 'position:absolute;font-size:2rem;opacity:0.15;top:8px;right:8px;transform:rotate(45deg)' },
       { text: '🌸', style: 'position:absolute;font-size:2rem;opacity:0.15;bottom:8px;left:8px;transform:rotate(-20deg)' },
     ],
@@ -135,6 +174,8 @@ const PartyEditor = (() => {
       { text: '🌸', style: 'position:absolute;font-size:1rem;opacity:0.2;bottom:12px;right:12px' },
     ],
   };
+  // Keep backward compat alias for templates using 'botanical'
+  decorationDefs.botanical = decorationDefs.garden;
 
   function renderCard() {
     const card = cardEl();
@@ -142,8 +183,12 @@ const PartyEditor = (() => {
 
     const s = cardState;
     card.style.background = s.colors.background;
-    card.style.border = currentTemplate.decorations.borderStyle;
-    card.style.borderRadius = currentTemplate.decorations.borderRadius;
+    if (s.borderStyle === 'none' || s.borderWidth === 0) {
+      card.style.border = 'none';
+    } else {
+      card.style.border = `${s.borderWidth}px ${s.borderStyle} ${s.borderColor}`;
+    }
+    card.style.borderRadius = s.borderRadius + 'px';
     card.style.color = s.colors.text;
     card.style.textAlign = s.textAlign;
 
@@ -152,7 +197,7 @@ const PartyEditor = (() => {
     // Decorations layer — real DOM elements for export fidelity
     const decoEl = document.createElement('div');
     decoEl.className = 'card-decorations';
-    const decoType = currentTemplate.decorations.type;
+    const decoType = s.decorationType || currentTemplate.decorations.type;
     const defs = decorationDefs[decoType] || [];
     defs.forEach(d => {
       const span = document.createElement('span');
@@ -216,6 +261,11 @@ const PartyEditor = (() => {
 
       if (field === 'title') {
         el.style.fontSize = s.headingSize;
+      }
+
+      // Apply body font size to non-heading fields
+      if (field !== 'title' && field !== 'subtitle') {
+        el.style.fontSize = s.bodySize || '1rem';
       }
 
       el.addEventListener('input', () => {
@@ -535,23 +585,52 @@ const PartyEditor = (() => {
     html += '</div>';
 
     // Font controls
+    const fontOptions = [
+      { value: "'Fredoka', cursive", label: 'Fredoka' },
+      { value: "'Playfair Display', serif", label: 'Playfair Display' },
+      { value: "'Cormorant Garamond', serif", label: 'Cormorant Garamond' },
+      { value: "'Inter', sans-serif", label: 'Inter' },
+      { value: "'Nunito', sans-serif", label: 'Nunito' },
+      { value: "'Dancing Script', cursive", label: 'Dancing Script' },
+      { value: "'Caveat', cursive", label: 'Caveat' },
+      { value: "'Pacifico', cursive", label: 'Pacifico' },
+      { value: "'Quicksand', sans-serif", label: 'Quicksand' },
+      { value: "'Lora', serif", label: 'Lora' },
+      { value: "'Poppins', sans-serif", label: 'Poppins' },
+    ];
+
+    const headingOpts = fontOptions.map(f =>
+      `<option value="${f.value}" ${cardState.fonts.heading.includes(f.label) ? 'selected' : ''}>${f.label}</option>`
+    ).join('');
+
+    const bodyOpts = fontOptions.map(f =>
+      `<option value="${f.value}" ${cardState.fonts.body.includes(f.label) ? 'selected' : ''}>${f.label}</option>`
+    ).join('');
+
+    const bodySize = parseFloat(cardState.bodySize) || 1;
+
     html += `<div class="panel-section">
       <div class="panel-section-title">${t('editor.font.family')}</div>
       <div class="panel-field">
         <label>${t('editor.field.title')} ${t('editor.font.family').toLowerCase()}</label>
-        <select id="font-heading">
-          <option value="'Fredoka', cursive" ${cardState.fonts.heading.includes('Fredoka') ? 'selected' : ''}>Fredoka</option>
-          <option value="'Playfair Display', serif" ${cardState.fonts.heading.includes('Playfair') ? 'selected' : ''}>Playfair Display</option>
-          <option value="'Cormorant Garamond', serif" ${cardState.fonts.heading.includes('Cormorant') ? 'selected' : ''}>Cormorant Garamond</option>
-          <option value="'Inter', sans-serif" ${cardState.fonts.heading.includes('Inter') ? 'selected' : ''}>Inter</option>
-          <option value="'Nunito', sans-serif" ${cardState.fonts.heading.includes('Nunito') ? 'selected' : ''}>Nunito</option>
-        </select>
+        <select id="font-heading">${headingOpts}</select>
+      </div>
+      <div class="panel-field">
+        <label>${t('editor.font.bodyFamily')}</label>
+        <select id="font-body">${bodyOpts}</select>
       </div>
       <div class="panel-field">
         <label>${t('editor.font.size')}</label>
         <div class="size-slider-group">
           <input type="range" id="heading-size" min="1.2" max="3" step="0.1" value="${parseFloat(cardState.headingSize)}">
           <span class="size-value" id="heading-size-val">${cardState.headingSize}</span>
+        </div>
+      </div>
+      <div class="panel-field">
+        <label>${t('editor.font.bodySize')}</label>
+        <div class="size-slider-group">
+          <input type="range" id="body-size" min="0.75" max="1.4" step="0.05" value="${bodySize}">
+          <span class="size-value" id="body-size-val">${cardState.bodySize || '1rem'}</span>
         </div>
       </div>
       <div class="panel-field">
@@ -599,6 +678,16 @@ const PartyEditor = (() => {
       });
     }
 
+    // Font body selector
+    const fontBody = panel.querySelector('#font-body');
+    if (fontBody) {
+      fontBody.addEventListener('change', () => {
+        cardState.fonts.body = fontBody.value;
+        renderCard();
+        saveState();
+      });
+    }
+
     // Heading size slider
     const headingSize = panel.querySelector('#heading-size');
     const headingSizeVal = panel.querySelector('#heading-size-val');
@@ -608,6 +697,26 @@ const PartyEditor = (() => {
         headingSizeVal.textContent = cardState.headingSize;
         const titleEl = cardEl().querySelector('[data-field="title"]');
         if (titleEl) titleEl.style.fontSize = cardState.headingSize;
+        saveState();
+      });
+    }
+
+    // Body size slider
+    const bodySizeSlider = panel.querySelector('#body-size');
+    const bodySizeVal = panel.querySelector('#body-size-val');
+    if (bodySizeSlider) {
+      bodySizeSlider.addEventListener('input', () => {
+        cardState.bodySize = bodySizeSlider.value + 'rem';
+        bodySizeVal.textContent = cardState.bodySize;
+        const card = cardEl();
+        if (card) {
+          card.querySelectorAll('.card-field').forEach(el => {
+            const field = el.getAttribute('data-field');
+            if (field !== 'title' && field !== 'subtitle') {
+              el.style.fontSize = cardState.bodySize;
+            }
+          });
+        }
         saveState();
       });
     }
@@ -655,6 +764,52 @@ const PartyEditor = (() => {
       <div style="display:flex;gap:8px;flex-wrap:wrap;" id="color-presets"></div>
     </div>`;
 
+    // Gradient presets
+    html += `<div class="panel-section">
+      <div class="panel-section-title">${t('editor.design.gradients')}</div>
+      <div class="gradient-presets" id="gradient-presets"></div>
+    </div>`;
+
+    // Border controls
+    html += `<div class="panel-section">
+      <div class="panel-section-title">${t('editor.design.border')}</div>
+      <div class="panel-field">
+        <label>${t('editor.design.borderRadius')}</label>
+        <div class="size-slider-group">
+          <input type="range" id="border-radius" min="0" max="30" step="1" value="${cardState.borderRadius}">
+          <span class="size-value" id="border-radius-val">${cardState.borderRadius}px</span>
+        </div>
+      </div>
+      <div class="panel-field">
+        <label>${t('editor.design.borderWidth')}</label>
+        <div class="size-slider-group">
+          <input type="range" id="border-width" min="0" max="6" step="1" value="${cardState.borderWidth}">
+          <span class="size-value" id="border-width-val">${cardState.borderWidth}px</span>
+        </div>
+      </div>
+      <div class="panel-field">
+        <label>${t('editor.design.borderStyle')}</label>
+        <div class="border-style-group" id="border-style-group">
+          <button class="border-style-btn ${cardState.borderStyle === 'none' ? 'active' : ''}" data-bstyle="none">${t('editor.design.borderNone')}</button>
+          <button class="border-style-btn ${cardState.borderStyle === 'solid' ? 'active' : ''}" data-bstyle="solid">${t('editor.design.borderSolid')}</button>
+          <button class="border-style-btn ${cardState.borderStyle === 'dashed' ? 'active' : ''}" data-bstyle="dashed">${t('editor.design.borderDashed')}</button>
+          <button class="border-style-btn ${cardState.borderStyle === 'dotted' ? 'active' : ''}" data-bstyle="dotted">${t('editor.design.borderDotted')}</button>
+        </div>
+      </div>
+      <div class="color-picker-group">
+        <label>${t('editor.design.borderColor')}</label>
+        <div class="color-picker-wrapper">
+          <input type="color" id="border-color" value="${cardState.borderColor}">
+        </div>
+      </div>
+    </div>`;
+
+    // Decoration type picker
+    html += `<div class="panel-section">
+      <div class="panel-section-title">${t('editor.design.decorations')}</div>
+      <div class="deco-type-grid" id="deco-type-grid"></div>
+    </div>`;
+
     panel.innerHTML = html;
 
     // Bind color pickers
@@ -669,6 +824,15 @@ const PartyEditor = (() => {
 
     // Build color presets
     buildColorPresets();
+
+    // Build gradient presets
+    buildGradientPresets();
+
+    // Bind border controls
+    bindBorderControls(panel);
+
+    // Build decoration type picker
+    buildDecoTypePicker();
   }
 
   function buildColorPresets() {
@@ -706,6 +870,139 @@ const PartyEditor = (() => {
     document.querySelectorAll('[data-color-key]').forEach(input => {
       const key = input.dataset.colorKey;
       if (cardState.colors[key]) input.value = cardState.colors[key];
+    });
+  }
+
+  function buildGradientPresets() {
+    const container = document.getElementById('gradient-presets');
+    if (!container) return;
+
+    const gradients = [
+      { name: 'Sunset', value: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
+      { name: 'Ocean', value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+      { name: 'Forest', value: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' },
+      { name: 'Warm', value: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+      { name: 'Sky', value: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' },
+      { name: 'Gold', value: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' },
+      { name: 'Lavender', value: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)' },
+      { name: 'Night', value: 'linear-gradient(135deg, #0c3547 0%, #2c5364 50%, #203a43 100%)' },
+    ];
+
+    gradients.forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = 'gradient-swatch';
+      btn.style.background = g.value;
+      btn.title = g.name;
+      btn.addEventListener('click', () => {
+        cardState.colors.background = g.value;
+        applyColors();
+        updateDesignPanel();
+        saveState();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function applyBorderToCard() {
+    const card = cardEl();
+    if (!card) return;
+    const s = cardState;
+    if (s.borderStyle === 'none' || s.borderWidth === 0) {
+      card.style.border = 'none';
+    } else {
+      card.style.border = `${s.borderWidth}px ${s.borderStyle} ${s.borderColor}`;
+    }
+    card.style.borderRadius = s.borderRadius + 'px';
+  }
+
+  function bindBorderControls(panel) {
+    // Border radius slider
+    const radiusSlider = panel.querySelector('#border-radius');
+    const radiusVal = panel.querySelector('#border-radius-val');
+    if (radiusSlider) {
+      radiusSlider.addEventListener('input', () => {
+        cardState.borderRadius = parseInt(radiusSlider.value);
+        radiusVal.textContent = cardState.borderRadius + 'px';
+        applyBorderToCard();
+        saveState();
+      });
+    }
+
+    // Border width slider
+    const widthSlider = panel.querySelector('#border-width');
+    const widthVal = panel.querySelector('#border-width-val');
+    if (widthSlider) {
+      widthSlider.addEventListener('input', () => {
+        cardState.borderWidth = parseInt(widthSlider.value);
+        widthVal.textContent = cardState.borderWidth + 'px';
+        applyBorderToCard();
+        saveState();
+      });
+    }
+
+    // Border style toggle buttons
+    panel.querySelectorAll('[data-bstyle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        panel.querySelectorAll('[data-bstyle]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        cardState.borderStyle = btn.dataset.bstyle;
+        applyBorderToCard();
+        saveState();
+      });
+    });
+
+    // Border color picker
+    const borderColorPicker = panel.querySelector('#border-color');
+    if (borderColorPicker) {
+      borderColorPicker.addEventListener('input', () => {
+        cardState.borderColor = borderColorPicker.value;
+        applyBorderToCard();
+        saveState();
+      });
+    }
+  }
+
+  function buildDecoTypePicker() {
+    const container = document.getElementById('deco-type-grid');
+    if (!container) return;
+
+    const decoLabels = {
+      'none': { emoji: '⊘', label: 'Ingen' },
+      'confetti': { emoji: '🎊', label: 'Konfetti' },
+      'balloons': { emoji: '🎈', label: 'Ballonger' },
+      'stars': { emoji: '⭐', label: 'Stjärnor' },
+      'elegant': { emoji: '🌿', label: 'Elegant' },
+      'garden': { emoji: '🌸', label: 'Trädgård' },
+      'sparkle': { emoji: '✨', label: 'Glitter' },
+      'rainbow': { emoji: '🌈', label: 'Regnbåge' },
+      'neon': { emoji: '🪩', label: 'Neon' },
+      'floral': { emoji: '🌹', label: 'Blommig' },
+      'sunny': { emoji: '🌻', label: 'Solig' },
+      'autumn': { emoji: '🍂', label: 'Höst' },
+      'comic': { emoji: '💥', label: 'Komisk' },
+      'treasure': { emoji: '💎', label: 'Skatt' },
+      'luxe': { emoji: '👑', label: 'Lyxig' },
+      'mono': { emoji: '◼️', label: 'Mono' },
+      'soft': { emoji: '🌸', label: 'Mjuk' },
+      'clean': { emoji: '─', label: 'Ren' },
+      'minimal-dark': { emoji: '◻️', label: 'Minimal' },
+      'relaxed': { emoji: '🎵', label: 'Avslappnad' },
+    };
+
+    const currentDeco = cardState.decorationType || currentTemplate.decorations.type;
+
+    Object.entries(decoLabels).forEach(([key, info]) => {
+      const btn = document.createElement('button');
+      btn.className = 'deco-type-btn' + (key === currentDeco ? ' active' : '');
+      btn.innerHTML = `<span class="deco-emoji">${info.emoji}</span><span>${info.label}</span>`;
+      btn.addEventListener('click', () => {
+        cardState.decorationType = key;
+        container.querySelectorAll('.deco-type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCard();
+        saveState();
+      });
+      container.appendChild(btn);
     });
   }
 

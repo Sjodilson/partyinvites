@@ -657,6 +657,94 @@
   padding: 8px;
 }
 
+/* ---------- Border Style Toggle ---------- */
+.border-style-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.border-style-btn {
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 100px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.border-style-btn:hover {
+  border-color: var(--color-primary-light);
+}
+
+.border-style-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+/* ---------- Decoration Type Grid ---------- */
+.deco-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 6px;
+}
+
+.deco-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 0.68rem;
+  color: var(--color-text-secondary);
+}
+
+.deco-type-btn .deco-emoji {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.deco-type-btn:hover {
+  border-color: var(--color-primary-light);
+  background: rgba(108, 92, 231, 0.04);
+}
+
+.deco-type-btn.active {
+  border-color: var(--color-primary);
+  background: rgba(108, 92, 231, 0.08);
+  color: var(--color-primary);
+}
+
+/* ---------- Gradient Presets ---------- */
+.gradient-presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gradient-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.gradient-swatch:hover {
+  border-color: var(--color-primary-light);
+  transform: scale(1.15);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .editor-layout {
