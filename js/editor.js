@@ -192,6 +192,11 @@ const PartyEditor = (() => {
     resizeBtn.className = 'sticker-resize';
     el.appendChild(resizeBtn);
 
+    // Rotate handle
+    const rotateBtn = document.createElement('span');
+    rotateBtn.className = 'sticker-rotate';
+    el.appendChild(rotateBtn);
+
     // Click to select
     el.addEventListener('mousedown', e => {
       if (e.target === delBtn) return;
@@ -201,6 +206,8 @@ const PartyEditor = (() => {
 
       if (e.target === resizeBtn) {
         startResize(e, stickerData, el);
+      } else if (e.target === rotateBtn) {
+        startRotate(e, stickerData, el);
       } else {
         startDrag(e, stickerData, el);
       }
@@ -215,6 +222,8 @@ const PartyEditor = (() => {
       const touch = e.touches[0];
       if (e.target === resizeBtn) {
         startResize(touch, stickerData, el);
+      } else if (e.target === rotateBtn) {
+        startRotate(touch, stickerData, el);
       } else {
         startDrag(touch, stickerData, el);
       }
@@ -281,6 +290,44 @@ const PartyEditor = (() => {
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onUp);
       saveState();
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+
+  function startRotate(startEvent, stickerData, el) {
+    const elRect = el.getBoundingClientRect();
+    const centerX = elRect.left + elRect.width / 2;
+    const centerY = elRect.top + elRect.height / 2;
+    const startAngle = Math.atan2(
+      (startEvent.clientY || startEvent.pageY) - centerY,
+      (startEvent.clientX || startEvent.pageX) - centerX
+    );
+    const startRotation = stickerData.rotation || 0;
+
+    el.classList.add('rotating');
+
+    function onMove(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const angle = Math.atan2(ev.clientY - centerY, ev.clientX - centerX);
+      const delta = (angle - startAngle) * (180 / Math.PI);
+      const newRotation = Math.round(startRotation + delta);
+      stickerData.rotation = newRotation;
+      el.style.transform = `rotate(${newRotation}deg)`;
+    }
+
+    function onUp() {
+      el.classList.remove('rotating');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+      saveState();
+      updatePlacedStickersList();
     }
 
     document.addEventListener('mousemove', onMove);

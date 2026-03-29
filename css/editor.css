@@ -607,6 +607,41 @@
   display: block;
 }
 
+.card-sticker .sticker-rotate {
+  position: absolute;
+  bottom: -8px;
+  left: -8px;
+  width: 18px;
+  height: 18px;
+  background: #10B981;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: alias;
+  display: none;
+  z-index: 30;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.card-sticker .sticker-rotate::after {
+  content: '↻';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  line-height: 1;
+  color: white;
+}
+
+.card-sticker.selected .sticker-rotate {
+  display: block;
+}
+
+.card-sticker.rotating {
+  opacity: 0.9;
+  z-index: 20;
+}
+
 /* ---------- Sticker Library Panel ---------- */
 .sticker-categories {
   display: flex;
