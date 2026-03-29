@@ -86,7 +86,8 @@ const PartyApp = (() => {
 
       // Decoration elements
       if (tpl.decorations.emoji) {
-        const emojis = tpl.decorations.emoji.split('');
+        const segmenter = new Intl.Segmenter('sv', { granularity: 'grapheme' });
+        const emojis = [...segmenter.segment(tpl.decorations.emoji)].map(s => s.segment).filter(s => /\p{Emoji}/u.test(s));
         emojis.forEach((emoji, i) => {
           const span = document.createElement('span');
           span.className = 'preview-decoration';
