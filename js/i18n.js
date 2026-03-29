@@ -65,6 +65,7 @@ const PartyI18n = (() => {
       'stickers.category.animals': '🦄 Djur',
       'stickers.category.adventure': '🏴‍☠️ Äventyr',
       'stickers.category.music': '🎵 Musik',
+      'stickers.category.sports': '🎳 Sport',
       'stickers.category.misc': '🎭 Övrigt',
 
       'export.title': 'Exportera ditt kort',
@@ -292,6 +293,7 @@ const PartyI18n = (() => {
       'stickers.category.animals': '🦄 Animals',
       'stickers.category.adventure': '🏴‍☠️ Adventure',
       'stickers.category.music': '🎵 Music',
+      'stickers.category.sports': '🎳 Sports',
       'stickers.category.misc': '🎭 Other',
 
       'export.title': 'Export your card',
